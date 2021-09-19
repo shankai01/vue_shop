@@ -1,8 +1,21 @@
 /*全局样式表*/
 html,body,#app{
-        height: 100%;
-        width: 100%;
-        margin: 0;
-        padding: 0;
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
         
+}
+
+.el-breadcrumb{
+  margin-bottom: 15px;
+}
+
+.el-table{
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.el-pagination{
+  margin-top: 10px;
 }
