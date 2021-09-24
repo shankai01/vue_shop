@@ -19,3 +19,28 @@ html,body,#app{
 .el-pagination{
   margin-top: 10px;
 }
+
+.el-cascader-menu{
+  height: 300px;
+}
+
+/* .el-cascader-panel .el-radio__input{
+  visibility:hidden;
+} */
+
+.el-radio__inner {
+  border-radius: 0;
+  border: 0;
+  width: 170px;
+  height: 34px;
+  background-color: transparent;
+  cursor: pointer;
+  box-sizing: border-box;
+  position: absolute;
+  top: -18px;
+  left: -19px;
+}
+
+.el-radio__input.is-checked .el-radio__inner {
+  background: transparent;
+}
