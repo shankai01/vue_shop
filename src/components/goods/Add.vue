@@ -1,0 +1,337 @@
+<template>
+    <div>
+       <!-- 面包屑导航区 -->
+       <el-breadcrumb separator-class="el-icon-arrow-right">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>用户管理</el-breadcrumb-item>
+            <el-breadcrumb-item>用户列表</el-breadcrumb-item>
+       </el-breadcrumb>
+       <!-- 卡片试图区域 -->
+       <el-card>
+           <!-- 提示区 -->
+            <el-alert
+                title="添加商品信息"
+                type="info" :closable="false"
+                center show-icon>
+            </el-alert>
+            <!-- 步骤条 -->
+            <el-steps :space="200" :active="activeIndex - 0" finish-status="success" align-center>
+                <el-step title="基本信息"></el-step>
+                <el-step title="商品参数"></el-step>
+                <el-step title="商品属性"></el-step>
+                <el-step title="商品图片"></el-step>
+                <el-step title="商品内容"></el-step>
+                <el-step title="完成"></el-step>
+            </el-steps>
+            <!-- 表单区 -->
+            <el-form :model="addForm" :rules="addFormRules"
+              ref="addFormRef" label-width="100px" label-position="top">
+              <!-- tab标签页区 -->
+              <el-tabs v-model="activeIndex" :tab-position="'left'"  :before-leave="beforeTabLeave" @tab-click="tabClicked">
+                <el-tab-pane label="基本信息" name='0'>
+                  <el-form-item label="商品名称" prop="goods_name">
+                    <el-input v-model="addForm.goods_name"></el-input>
+                  </el-form-item>
+                  <el-form-item label="商品价格" prop="goods_price">
+                    <el-input v-model="addForm.goods_price" type="number"></el-input>
+                  </el-form-item>
+                  <el-form-item label="商品重量" prop="goods_weight">
+                    <el-input v-model="addForm.goods_weight" type="number"></el-input>
+                  </el-form-item>
+                  <el-form-item label="商品数量" prop="goods_number">
+                    <el-input v-model="addForm.goods_number" type="number"></el-input>
+                  </el-form-item>
+                  <el-form-item label="商品分类" prop="goods_cat">
+                     <el-cascader
+                      v-model="addForm.goods_cat"
+                      :options="catelist"
+                      expandTrigger="hover"
+                      :props="cateProps"
+                      @change="handleChange"></el-cascader>
+                  </el-form-item>
+                </el-tab-pane>
+                <el-tab-pane label="商品参数" name='1'>
+                  <!-- 渲染表单的Item项 -->
+                  <el-form-item :label="item.attr_name" v-for="item in manyTableData" :key="item.attr_id">
+                    <!-- 复选框组 -->
+                    <el-checkbox-group v-model="item.attr_vals">
+                      <el-checkbox :label="cb" v-for="(cb, i) in item.attr_vals" :key="i" border @change="changeBox"></el-checkbox>
+                    </el-checkbox-group>
+                  </el-form-item>
+                </el-tab-pane>
+                <el-tab-pane label="商品属性" name='2'>
+                  <el-form-item :label="item.attr_name" v-for="item in onlyTableData" :key="item.attr_id">
+                    <el-input v-model="item.attr_vals"></el-input>
+                  </el-form-item>
+                </el-tab-pane>
+                <el-tab-pane label="商品图片" name='3'>
+                  <!-- action 表示图片上传的后台API地址 -->
+                  <el-upload
+                    :action="uploadURL"
+                    :on-preview="handlePreview"
+                    :on-remove="handleRemove"
+                    list-type="picture"
+                    :headers="headerObj"
+                    :on-success="handleSuccess">
+                    <el-button size="small" type="primary">点击上传</el-button>
+                  </el-upload>
+                </el-tab-pane>
+                <el-tab-pane label="商品内容" name='4'>
+                  <!-- 富文本编辑器 -->
+                  <quill-editor v-model="addForm.goods_introduce">
+                  </quill-editor>
+                  <!-- 添加商品的按钮 -->
+                  <el-button type="primary" class="btnAdd" @click="add">添加商品</el-button>
+                </el-tab-pane>
+              </el-tabs>
+            </el-form>
+       </el-card>
+       <!-- 预览图片对话框 -->
+       <el-dialog
+        title="图片预览"
+        :visible.sync="previewVisible"
+        width="50%">
+        <img :src="previewPath" alt="" class="previewImg">
+      </el-dialog>
+    </div>
+</template>
+
+<script>
+import _ from 'lodash'
+export default {
+  data () {
+    return {
+      // 控制步骤条的激活
+      activeIndex: 0,
+      // 添加商品的表单数据对象
+      addForm: {
+        goods_name: '',
+        goods_price: 0,
+        goods_weight: 0,
+        goods_number: 0,
+        // 商品分类
+        goods_cat: [],
+        // 图片的数组
+        pics: [],
+        // -富文本
+        goods_introduce: '',
+        // 商品的参数（数组），包含 `动态参数` 和 `静态属性`
+        attrs: []
+      },
+      // 添加商品的表单数据对象验证规则
+      addFormRules: {
+        goods_name: [
+          {
+            required: true,
+            message: '请输入商品名称',
+            trigger: 'blur'
+          }
+        ],
+        goods_price: [
+          {
+            required: true,
+            message: '请输入商品价格',
+            trigger: 'blur'
+          }
+        ],
+        goods_weight: [
+          {
+            required: true,
+            message: '请输入商品重量',
+            trigger: 'blur'
+          }
+        ],
+        goods_number: [
+          {
+            required: true,
+            message: '请输入商品数量',
+            trigger: 'blur'
+          }
+        ],
+        goods_cat: [
+          {
+            required: true,
+            message: '请选择商品分类',
+            trigger: 'blur'
+          }
+        ]
+      },
+      // 商品分类数据列表
+      catelist: [],
+      // -配置label对象
+      cateProps: {
+        label: 'cat_name',
+        value: 'cat_id',
+        children: 'children'
+      },
+      // -动态参数列表
+      manyTableData: [],
+      // -静态属性列表
+      onlyTableData: [],
+      // -上传图片的URL地址
+      uploadURL: 'http://127.0.0.1:8888/api/private/v1/upload',
+      // -图片上传组件的请求头对象
+      headerObj: {
+        Authorization: window.sessionStorage.getItem('token')
+      },
+      // -预览图片
+      previewPath: '',
+      // 控制预览图片的对话框的隐藏与显示
+      previewVisible: false
+    }
+  },
+  created () {
+    this.getCateList()
+  },
+  methods: {
+    // 获取所有商品列表
+    async getCateList () {
+      const { data: res } = await this.$http.get('categories')
+      if (res.meta.status !== 200) {
+        return this.$message.error('获取商品分类失败！')
+      }
+      // 把获取的数据赋值
+      this.catelist = res.data
+      // this.total = res.data.total
+      console.log('获取所有商品列表：', this.catelist)
+    },
+    // 级联选择器选择项发生变化，会触发这个函数
+    handleChange () {
+      if (this.addForm.goods_cat.length !== 3) {
+        this.addForm.goods_cat = []
+      }
+    },
+    // 判断条件禁止跳转标签页
+    beforeTabLeave (activeName, oldActiveName) {
+      if (oldActiveName === '0' && this.addForm.goods_cat.length !== 3) {
+        this.$message.error('请选择商品分类！')
+        return false
+      }
+    },
+    // -
+    changeBox () {
+      console.log('点击了标签')
+      console.log('this.manyTableData:', this.manyTableData)
+    },
+    // -
+    async tabClicked () {
+      if (this.activeIndex === '1') {
+        const { data: res } = await this.$http.get(`categories/${this.cateId}/attributes`, {
+          params: { sel: 'many' }
+        })
+        if (res.meta.status !== 200) {
+          return this.$message.error('获取动态参数列表失败！')
+        }
+        console.log('res.data', res.data)
+        // 把字符串变成数组，用于渲染
+        res.data.forEach(item => {
+          item.attr_vals = item.attr_vals.length === 0 ? [] : item.attr_vals.split(' ')
+        })
+        this.manyTableData = res.data
+      } else if (this.activeIndex === '2') {
+        const { data: res } = await this.$http.get(`categories/${this.cateId}/attributes`, {
+          params: { sel: 'only' }
+        })
+        if (res.meta.status !== 200) {
+          return this.$message.error('获取静态属性列表失败！')
+        }
+        this.onlyTableData = res.data
+      }
+    },
+    // -处理图片预览效果
+    handlePreview (file) {
+      this.previewPath = file.response.data.url
+      this.previewVisible = true
+    },
+    // -移除图片的操作
+    handleRemove (file) {
+      const filepath = file.response.data.tmp_path
+      const i = this.addForm.pics.findIndex(x => x.pic === filepath)
+      this.addForm.pics.splice(i, 1)
+    },
+    // -监听图片上传成功事件
+    handleSuccess (response) {
+      console.log('res:', response)
+      const str = response.data.tmp_path
+      // 移除tmp_path里面的反斜杠
+      // console.log('修改前this.str', this.str)
+      // this.str = this.str.substr(0, 12 - 1) + this.str.substr(12, this.str.length)
+      // console.log('修改后this.str', this.str)
+      const picInfo = {
+        pic: str
+      }
+      this.addForm.pics.push(picInfo)
+      console.log('图片上传成功后this.addForm：', this.addForm)
+      this.addForm.pics.forEach(item => {
+        this.strobj = item
+      })
+    },
+    // -添加商品
+    add () {
+      this.$refs.addFormRef.validate(async valid => {
+        if (!valid) {
+          return this.$message.error('请填写必要的表单项！')
+        }
+        // 通过表单验证后：
+        // 处理表单的goods_cat,使用深拷贝，把数组转换成字符串，用于发请求参数
+        const form = _.cloneDeep(this.addForm)
+        form.goods_cat = form.goods_cat.join(',')
+        // 清空上一次修改的参数属性数组数据，防止多次添加数据在数组
+        form.attrs = []
+        console.log('已清空attrs!!')
+        // 处理动态参数
+        this.manyTableData.forEach(item => {
+          const newInfo = {
+            attr_id: item.attr_id,
+            attr_value: item.attr_vals.join(' ')
+          }
+          this.addForm.attrs.push(newInfo)
+        })
+        // 处理静态属性
+        this.onlyTableData.forEach(item => {
+          const newInfo = {
+            attr_id: item.attr_id,
+            attr_value: item.attr_vals
+          }
+          this.addForm.attrs.push(newInfo)
+        })
+        form.attrs = this.addForm.attrs
+        // 处理图片的临时路径pic
+        // pics参数在部位空的情况下，引发数据库报错且关闭数据库
+        // 发情求时：pics 参数为空
+        // form.pics = []
+        // console.log('为了防止数据库报错，把pics 参数设置为空！！！！\n pics：', form.pics)
+        // 发起请求，添加商品
+        console.log('发请求前的form表单(参数)：', form)
+        const { data: res } = await this.$http.post('goods', form)
+        if (res.meta.status !== 201) {
+          console.log('res.meta.status' + res.meta.status)
+          return this.$message.error('添加商品失败！')
+        }
+        this.$message.success('添加商品成功！')
+        this.$router.push('/goods')
+      })
+    }
+  },
+  computed: {
+    cateId () {
+      if (this.addForm.goods_cat.length === 3) {
+        return this.addForm.goods_cat[2]
+      }
+      return null
+    }
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.el-checkbox {
+  margin: 0 10px 0 0 !important;
+}
+.previewImg {
+  width: 100%;
+}
+.btnAdd {
+  margin-top: 15px;
+}
+</style>

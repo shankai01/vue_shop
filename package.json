@@ -11,11 +11,14 @@
     "core-js": "^3.6.5",
     "element-ui": "^2.4.5",
     "less-loader": "^6.2.0",
+    "lodash": "^4.17.21",
     "vue": "^2.6.11",
+    "vue-quill-editor": "^3.0.6",
     "vue-router": "^3.2.0",
     "vue-table-with-tree-grid": "^0.2.4"
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.174",
     "@vue/cli-plugin-babel": "~4.5.0",
     "@vue/cli-plugin-eslint": "~4.5.0",
     "@vue/cli-plugin-router": "~4.5.0",
