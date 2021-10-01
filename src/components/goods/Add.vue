@@ -184,7 +184,7 @@ export default {
     this.getCateList()
   },
   methods: {
-    // 获取所有商品列表
+    // 获取所有商品分类列表
     async getCateList () {
       const { data: res } = await this.$http.get('categories')
       if (res.meta.status !== 200) {
@@ -208,12 +208,7 @@ export default {
         return false
       }
     },
-    // -
-    changeBox () {
-      console.log('点击了标签')
-      console.log('this.manyTableData:', this.manyTableData)
-    },
-    // -
+    // -点击左边标签页触发
     async tabClicked () {
       if (this.activeIndex === '1') {
         const { data: res } = await this.$http.get(`categories/${this.cateId}/attributes`, {
@@ -253,10 +248,6 @@ export default {
     handleSuccess (response) {
       console.log('res:', response)
       const str = response.data.tmp_path
-      // 移除tmp_path里面的反斜杠
-      // console.log('修改前this.str', this.str)
-      // this.str = this.str.substr(0, 12 - 1) + this.str.substr(12, this.str.length)
-      // console.log('修改后this.str', this.str)
       const picInfo = {
         pic: str
       }
@@ -278,6 +269,7 @@ export default {
         form.goods_cat = form.goods_cat.join(',')
         // 清空上一次修改的参数属性数组数据，防止多次添加数据在数组
         form.attrs = []
+        this.addForm.attrs = []
         console.log('已清空attrs!!')
         // 处理动态参数
         this.manyTableData.forEach(item => {
@@ -298,7 +290,7 @@ export default {
         form.attrs = this.addForm.attrs
         // 处理图片的临时路径pic
         // pics参数在部位空的情况下，引发数据库报错且关闭数据库
-        // 发情求时：pics 参数为空
+        // 发请求时：pics 参数为空
         // form.pics = []
         // console.log('为了防止数据库报错，把pics 参数设置为空！！！！\n pics：', form.pics)
         // 发起请求，添加商品
